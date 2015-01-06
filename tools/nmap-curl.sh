@@ -6,9 +6,10 @@ do
 	elif [[ $line == *'tcp open  https' ]]; then
 		curl -v -I `echo 'https://'$ip` 2>&1 | while read curline
 		do
-			if [[ $curline == *'subject: CN='* ]]; then
-				echo $ip `echo $curline | cut -d= -f2`
+			if [[ $curline == *'subject:'*' CN='* ]]; then
+				echo $ip `echo $curline | sed "s/.*\CN=//"`
 			fi
 		done 
 	fi
 done
+
