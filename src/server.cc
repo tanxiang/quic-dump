@@ -1,4 +1,3 @@
-#include "server.hh"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -6,6 +5,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include "server.hh"
 
 namespace ssev{
 
@@ -82,3 +82,7 @@ server<instance_type>::~server(){
 }
 
 };
+
+#include "instance.hh"
+#include "chacha20.hh"
+template class ssev::server<ssev::instance<ssev::ssocket5<ssev::chacha20>>>;
