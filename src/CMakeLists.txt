@@ -14,6 +14,8 @@ include_directories(
 add_executable(ss-ev++
 	main.cc
 	server.cc
+	instance.cc
+	chacha20.cc
 )
 
 target_link_libraries(ss-ev++
