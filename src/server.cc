@@ -2,15 +2,35 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 
 namespace ssev{
 
-
-void server::io_accept(ev::io &watcher, int revents){
-
+template<typename instance_type>
+void server<instance_type>::io_accept(ev::io &watcher, int revents){
+#ifdef DEBUG_FD_LIVETIME
+	output<<"io_accept:"<<revents<<'\n';
+#endif
+	static uint32_t count;
+	if (ev::ERROR & revents) {
+		perror("got invalid event");
+		return;
+	}
+	::sockaddr_in client_addr;
+	socklen_t client_len = sizeof(client_addr);
+	int client_fd = accept(watcher.fd, (struct sockaddr *)&client_addr, &client_len);
+	if(client_fd > 0){
+		while(io_workers[count%io_workers.size()].pending())
+			++count;
+		io_workers[count++%io_workers.size()].setup(client_fd, client_addr);
+	}
 }
 
-void server::signal_cb(ev::sig &signal, int revents){
+template<typename instance_type>
+void server<instance_type>::signal_cb(ev::sig &signal, int revents){
 
 }
 
@@ -18,7 +38,7 @@ static inline int bind_helper(int& fd,unsigned short port = 0){
 	fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(fd < 0)
 		return fd;
-	struct sockaddr_in addr;
+	::sockaddr_in addr;
 	addr.sin_family = AF_INET;
 	addr.sin_port   = htons(port);
 	addr.sin_addr.s_addr = INADDR_ANY;
@@ -38,8 +58,8 @@ static inline int bind_helper(int& fd,unsigned short port = 0){
 	return ntohs(addr.sin_port);
 }
 
-
-server::server(unsigned short port ,std::string ip){
+template<typename instance_type>
+server<instance_type>::server(unsigned short port ,std::string ip){
 	output<<"Server:"<<std::endl
 		<<"EV loop:"<<(loop.is_default()? "default loop" : "dynamic loop")
 		<<"\nEV backend:"<<(loop.backend()==ev::EPOLL?"epoll":"poll")
@@ -56,7 +76,8 @@ server::server(unsigned short port ,std::string ip){
 	io.start(bind_fd, ev::READ);
 }
 
-server::~server(){
+template<typename instance_type>
+server<instance_type>::~server(){
 	close(bind_fd);
 }
 
