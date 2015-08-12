@@ -10,11 +10,16 @@ class instance:public noncopyable{
 	int fd=0;
 	ev::io io_read,io_write,
 		client_io_read,client_io_write;
+	ev::periodic timer;
 	protocol session;
 	
 	void recv_event(ev::io &watcher, int revents);
 	
 	void client_recv_event(ev::io &watcher, int revents);
+	
+	void send_event(ev::io &watcher, int revents);
+	
+	void client_send_event(ev::io &watcher, int revents);
 	
 	void timer_event(ev::periodic &watcher, int revents);
 public:
